@@ -1,6 +1,6 @@
 # LumpyLP
 
-[![CI](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml/badge.svg)](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml)
+[![CI](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml)
 
 A streaming library of legally free music: Creative Commons and public-domain recordings gathered from open archives, with curation left entirely to listeners. Nothing in the product ranks or recommends tracks; what rises is what people vote up ("lump"). The hard part is not the player, it is the catalog: eighteen sources describe licenses, rights, artists and locations in eighteen different ways, and a track should only be playable when its rights are actually clear.
 
