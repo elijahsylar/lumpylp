@@ -1,0 +1,55 @@
+# ─── Dependencies & build output ─────────────────────────
+node_modules/
+dist/
+build/
+client/dist/
+client/tsconfig.tsbuildinfo
+.cache/
+coverage/
+
+# ─── Secrets ─────────────────────────────────────────────
+# .env.example is the tracked template; every real env file is local only.
+.env
+.env.*
+!.env.example
+
+# TLS material (for example a managed MySQL CA bundle).
+*.pem
+*.key
+*.crt
+
+# Database dumps never belong in the working tree.
+# The negation keeps migrations addable: they live in the repo by design,
+# and without it the next 0NN_*.sql would silently fail to stage.
+*.sql
+!server/migrations/*.sql
+!server/db/*.sql
+
+# ─── Logs & runtime artifacts ────────────────────────────
+*.log
+server/logs/
+
+# Scout runtime output (tools/scout). scout_blocklist.txt IS tracked: it is
+# hand-curated input. The SQLite db and raw LLM transcripts are regenerated.
+tools/scout/scout.db
+tools/scout/scout_messages.jsonl
+*.db
+*.sqlite
+*.sqlite3
+*.jsonl
+
+# Local data, runs, backups
+data/
+!server/data/
+runs/
+logs/
+backups/
+*.sql.gz
+
+# ─── Editor / OS / tooling ───────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+.claude/
+__pycache__/
+*.pyc

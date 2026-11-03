@@ -1,0 +1,292 @@
+/* Fonts loaded via Google Fonts <link> in index.html — see Phase 10B.
+ * Fira Mono, VT323, Inter, IBM Plex Serif, Atkinson Hyperlegible. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Theme tokens ===
+ * Each color is stored as space-separated RGB so Tailwind's `<alpha-value>`
+ * placeholder can compose it: e.g. `text-accent/50` becomes
+ * `color: rgb(var(--color-accent) / 0.5)`.
+ *
+ * Underground is the default applied to :root. Other themes override the
+ * variables when [data-theme="..."] is set on <html> or <body>.
+ * All five themes have been verified against WCAG 2.2 AA (4.5:1 text,
+ * 3:1 UI) — see /tmp/theme-check.js. */
+
+:root,
+[data-theme="underground"] {
+  --color-bg: 8 8 8;
+  --color-body: 192 192 192;
+  --color-body-dim: 144 144 144;
+  --color-body-very-dim: 124 124 124;
+  --color-accent: 0 230 118;
+  --color-accent-bright: 0 255 140;
+  --color-accent-dim: 0 160 80;
+  --color-border: 26 58 26;
+  --color-fg-strong: 255 255 255;
+  --color-error: 239 68 68;
+  --font-body: 'Fira Mono', monospace;
+  --font-display: 'Fira Mono', monospace;
+  --font-scale: 1;
+}
+
+[data-theme="amber"] {
+  --color-bg: 10 8 5;
+  --color-body: 200 180 138;
+  --color-body-dim: 154 133 103;
+  --color-body-very-dim: 148 127 100;
+  --color-accent: 255 152 0;
+  --color-accent-bright: 255 183 77;
+  --color-accent-dim: 184 107 0;
+  --color-border: 74 58 31;
+  --color-fg-strong: 240 224 184;
+  --color-error: 255 82 82;
+  --font-body: 'VT323', monospace;
+  --font-display: 'VT323', monospace;
+  --font-scale: 1;
+}
+
+[data-theme="mono"] {
+  --color-bg: 8 8 8;
+  --color-body: 212 212 212;
+  --color-body-dim: 176 176 176;
+  --color-body-very-dim: 136 136 136;
+  --color-accent: 255 255 255;
+  --color-accent-bright: 255 255 255;
+  --color-accent-dim: 144 144 144;
+  --color-border: 64 64 64;
+  --color-fg-strong: 255 255 255;
+  --color-error: 239 68 68;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-scale: 1;
+}
+
+[data-theme="light"] {
+  --color-bg: 250 250 250;
+  --color-body: 26 26 26;
+  --color-body-dim: 85 85 85;
+  --color-body-very-dim: 110 110 110;
+  --color-accent: 0 102 51;
+  --color-accent-bright: 0 122 60;
+  --color-accent-dim: 45 90 63;
+  --color-border: 208 208 208;
+  --color-fg-strong: 0 0 0;
+  --color-error: 196 30 30;
+  --font-body: 'IBM Plex Serif', Georgia, serif;
+  --font-display: 'IBM Plex Serif', Georgia, serif;
+  --font-scale: 1;
+}
+
+[data-theme="highcontrast"] {
+  --color-bg: 0 0 0;
+  --color-body: 255 255 255;
+  --color-body-dim: 224 224 224;
+  --color-body-very-dim: 192 192 192;
+  --color-accent: 0 255 0;
+  --color-accent-bright: 0 255 0;
+  --color-accent-dim: 176 176 176;
+  --color-border: 128 128 128;
+  --color-fg-strong: 255 255 255;
+  --color-error: 255 100 100;
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
+  --font-display: 'Atkinson Hyperlegible', sans-serif;
+  --font-scale: 1;
+}
+
+html, body, #root {
+  height: 100%;
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-body));
+  font-family: var(--font-body);
+}
+
+/* Amber uses VT323 which has a tighter x-height than the other themes'
+ * fonts. Scale only the text-size utility classes — NOT the root html
+ * font-size — so widths, paddings, and gaps stay identical to other
+ * themes. Targets every Tailwind text-* class plus the arbitrary [10px]
+ * sizes used in dim labels. */
+[data-theme="amber"] .text-\[9px\]   { font-size: 11px; }
+[data-theme="amber"] .text-\[10px\]  { font-size: 12px; }
+[data-theme="amber"] .text-\[11px\]  { font-size: 13px; }
+[data-theme="amber"] .text-xs        { font-size: 0.9rem; }      /* 12 → 14.4 */
+[data-theme="amber"] .text-sm        { font-size: 1.05rem; }     /* 14 → 16.8 */
+[data-theme="amber"] .text-base      { font-size: 1.2rem; }      /* 16 → 19.2 */
+[data-theme="amber"] .text-lg        { font-size: 1.35rem; }     /* 18 → 21.6 */
+[data-theme="amber"] .text-xl        { font-size: 1.5rem; }      /* 20 → 24 */
+[data-theme="amber"] .text-2xl       { font-size: 1.8rem; }      /* 24 → 28.8 */
+[data-theme="amber"] .text-3xl       { font-size: 2.25rem; }     /* 30 → 36 */
+[data-theme="amber"] .text-4xl       { font-size: 2.7rem; }      /* 36 → 43.2 */
+[data-theme="amber"] .text-\[32px\]  { font-size: 38px; }
+[data-theme="amber"] input::placeholder { font-size: 1.05rem; }
+
+* { box-sizing: border-box; }
+
+::selection {
+  background: rgb(var(--color-accent));
+  color: rgb(var(--color-bg));
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgb(var(--color-bg)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-accent)); }
+
+/* Global focus-visible ring — applies to anything keyboard-focusable that
+ * doesn't already define a custom focus style. Uses the theme's accent-bright
+ * so it remains visible on light themes too (where the dark-theme #00ff8c
+ * would be invisible on bg #fafafa). */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid rgb(var(--color-accent-bright));
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* Visually-hidden helper for screen-reader-only text and live regions. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduce motion for users who request it. The .01ms (vs 0) keeps transitionend
+ * events firing so React-Spring / CSS transition listeners still resolve. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High-contrast preference (separate from the High Contrast theme): lift
+ * the dim tokens further when the OS asks for it. Applies to whichever
+ * theme is currently active. */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="underground"],
+  [data-theme="mono"] {
+    --color-body-dim: 200 200 200;
+    --color-body-very-dim: 176 176 176;
+  }
+  [data-theme="amber"] {
+    --color-body-dim: 200 180 138;
+    --color-body-very-dim: 200 180 138;
+  }
+  [data-theme="light"] {
+    --color-body-dim: 26 26 26;
+    --color-body-very-dim: 60 60 60;
+  }
+  /* highcontrast theme is already maxed; no further override needed. */
+}
+
+/* ─── Mobile touch targets ────────────────────────────────────────────
+ * Apple HIG asks for a 44x44pt minimum hit area. Several controls here
+ * are deliberately small visually — the vote arrows and the drag grip
+ * are 24px icons inside dense list rows, and scaling the icon itself
+ * would wreck the layout's density.
+ *
+ * `.tap-target` grows only the *hit* area, via a centered pseudo-element,
+ * leaving the painted size untouched. Applied below `sm:` only, because
+ * on a mouse pointer the small target is already easy to hit and the
+ * expanded box would overlap neighbouring controls.
+ *
+ * Note the overlay is capped at the element's own size once that exceeds
+ * 44px, so it never shrinks a control that is already large enough.
+ */
+@layer components {
+  .tap-target {
+    position: relative;
+  }
+  .tap-target::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    /* Sits above the button's own background but below any icon, and is
+     * transparent — it only exists to catch pointer events. */
+    pointer-events: auto;
+  }
+  /* Pointer-precise devices don't need the expanded box, and it would
+   * overlap adjacent controls in the dense desktop table. */
+  @media (min-width: 640px) {
+    .tap-target::after {
+      display: none;
+    }
+  }
+}
+
+/* Range inputs are 16px tall by default, which is an unusable drag target
+ * on touch. Grow the hit area without thickening the painted track. */
+@layer components {
+  .range-touch {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    height: 44px;
+    cursor: pointer;
+  }
+  .range-touch::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(var(--color-body-very-dim) / 0.45);
+  }
+  .range-touch::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(var(--color-body-very-dim) / 0.45);
+  }
+  .range-touch::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: rgb(var(--color-accent));
+    margin-top: -5px;
+  }
+  .range-touch::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 9999px;
+    background: rgb(var(--color-accent));
+  }
+  @media (min-width: 640px) {
+    .range-touch {
+      height: 20px;
+    }
+  }
+}
+
+/* Horizontal filter strips: scroll instead of wrapping on narrow screens. */
+@layer components {
+  .scroll-strip {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+  }
+  .scroll-strip::-webkit-scrollbar {
+    display: none;
+  }
+}

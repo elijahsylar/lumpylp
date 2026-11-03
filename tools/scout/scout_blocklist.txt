@@ -1,0 +1,33 @@
+# Liberate-Scout blocklist — substring match on URL or name.
+# Lines starting with # are comments. One pattern per line.
+# Edit freely between runs.
+
+# Already integrated into LumpyLP catalog (do not re-discover)
+audius.co
+archive.org/details/etree
+archive.org/details/netlabels
+archive.org/details/cylindertransfer
+jamendo.com
+ccmixter.org
+commons.wikimedia.org
+loc.gov/audio
+musopen.org
+api.musopen.org
+incompetech.com
+audionautix.com
+
+# Confirmed dead ends from prior research (do not re-explore)
+smithsonianfolkways.org
+pixabay.com/music
+bensound.com
+youtube.com/audiolibrary
+looperman.com
+magnatune.com
+freepd.com
+archive.org/details/audio_music
+archive.org/details/opensource_audio
+
+# Confirmed legal-risk sources (do not explore)
+rgafd.ru
+nlr.ru
+rsl.ru
