@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    name: Server lint and tests (throwaway MySQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      # The runner image ships mysql-server; the suite starts its own
+      # user-level mysqld on 127.0.0.1:33306 with data in /tmp.
+      - run: /usr/sbin/mysqld --version
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run testdb:start
+      - run: npm test
+      - if: always()
+        run: npm run testdb:stop
+
+  client:
+    name: Client lint, type-check and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npx eslint .
+      - run: npx tsc -b
+      - run: npx vite build --outDir "$RUNNER_TEMP/dist" --emptyOutDir
