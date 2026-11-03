@@ -30,8 +30,8 @@ jobs:
       - run: npm run testdb:start
       - run: npm test
       - name: Test MySQL logs (on failure)
-        if: failure()
-        run: tail -n 50 /tmp/lumpylp-testdb-*/init.log /tmp/lumpylp-testdb-*/error.log || true
+        if: failure() || cancelled()
+        run: tail -n 50 /tmp/lumpylp-testdb-*/init.log /tmp/lumpylp-testdb-*/start.log /tmp/lumpylp-testdb-*/error.log || true
       - if: always()
         run: npm run testdb:stop
 
