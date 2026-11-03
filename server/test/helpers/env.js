@@ -21,5 +21,7 @@ process.env.AUDIUS_APP_NAME = 'LumpyLP-test';
 // No test ever calls the real Cloudflare Turnstile endpoint: tests that need
 // verification point this at a local stub; everything else gets a dead port.
 process.env.TURNSTILE_VERIFY_URL = process.env.TURNSTILE_VERIFY_URL || 'http://127.0.0.1:9/siteverify';
+// The same for Nominatim: tests that geocode point this at a local stub.
+process.env.NOMINATIM_URL = process.env.NOMINATIM_URL || 'http://127.0.0.1:9/search';
 
 assertTestDb();
