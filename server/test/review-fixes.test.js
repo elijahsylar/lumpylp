@@ -56,22 +56,37 @@ test('R16: a bare "CC" license links to the item page that states it', async () 
 });
 
 test('R7: geocoding refuses quickly once the Nominatim queue is full (503 from discover)', async () => {
+  // geocode() does a DB cache lookup before it joins the queue, so calls
+  // started together can reach the queue in any order. Fill the queue with
+  // one call and wait until the stub sees its request before testing refusal.
   const hold = [];
   const stub = http.createServer((rq, rs) => { hold.push(rs); });
   await new Promise((r) => stub.listen(0, '127.0.0.1', r));
+  const saved = { url: process.env.NOMINATIM_URL, max: process.env.NOMINATIM_MAX_QUEUE };
   process.env.NOMINATIM_URL = `http://127.0.0.1:${stub.address().port}/search`;
-  process.env.NOMINATIM_MAX_QUEUE = '2';
-  const { geocode, GeocodeBusyError } = await import('../lib/geocode.js');
-  const pending = [geocode(`r7-a-${process.pid}`), geocode(`r7-b-${process.pid}`)];
-  const t0 = Date.now();
-  await assert.rejects(geocode(`r7-c-${process.pid}`), GeocodeBusyError);
-  assert.ok(Date.now() - t0 < 1000, 'refused without waiting');
-  const r = await req(app.base, `/api/discover/cities?q=r7-d-${process.pid}`);
-  assert.equal(r.status, 503);
-  assert.ok(Number(r.headers.get('retry-after')) > 0);
-  for (const rs of hold) { rs.setHeader('content-type', 'application/json'); rs.end('[]'); }
-  await Promise.allSettled(pending);
-  stub.close();
+  process.env.NOMINATIM_MAX_QUEUE = '1';
+  let pending;
+  try {
+    const { geocode, GeocodeBusyError } = await import('../lib/geocode.js');
+    pending = geocode(`r7-a-${process.pid}`);
+    for (let i = 0; i < 200 && hold.length === 0; i++) await new Promise((r) => setTimeout(r, 10));
+    assert.equal(hold.length, 1, 'the first lookup reached Nominatim');
+    const t0 = Date.now();
+    const tooSlow = new Promise((_, rej) => setTimeout(() => rej(new Error('not refused within 1s')), 1000).unref());
+    await assert.rejects(Promise.race([geocode(`r7-c-${process.pid}`), tooSlow]), GeocodeBusyError);
+    assert.ok(Date.now() - t0 < 1000, 'refused without waiting');
+    const r = await req(app.base, `/api/discover/cities?q=r7-d-${process.pid}`);
+    assert.equal(r.status, 503);
+    assert.ok(Number(r.headers.get('retry-after')) > 0);
+  } finally {
+    for (const rs of hold) { rs.setHeader('content-type', 'application/json'); rs.end('[]'); }
+    await Promise.allSettled([pending]);
+    stub.closeAllConnections();
+    stub.close();
+    for (const [k, v] of [['NOMINATIM_URL', saved.url], ['NOMINATIM_MAX_QUEUE', saved.max]]) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  }
 });
 
 test('R20: a host that refuses HEAD with 403 but serves GET is alive', async () => {
