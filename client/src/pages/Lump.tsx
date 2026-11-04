@@ -81,7 +81,7 @@ function TrackRow({ track, index, isOwner, onPlay, onRemove }: RowProps) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onPlay(track); }}
-        aria-label={`play ${track.title} by ${track.artist_name}`}
+        aria-label={`play ${track.title} by ${track.artist_name}, track ${String(index + 1).padStart(2, '0')}`}
         className="text-xs tabular-nums text-left bg-transparent text-accent-dim"
       >
         {String(index + 1).padStart(2, '0')}

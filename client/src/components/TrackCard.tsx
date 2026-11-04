@@ -57,6 +57,13 @@ export function TrackCard({ track, queue, index, countMode = 'index', shuffleSou
   const playLabel = isDead
     ? `${title} is no longer available`
     : `play ${title} by ${artistName}`;
+  // The button shows the row number or the net lump count; its name includes
+  // that text so speech-control users can say what they see.
+  const buttonLabel = isCurrent
+    ? playLabel
+    : countMode === 'lumps'
+      ? `${playLabel}, net lumps ${fmtNet(net)}`
+      : `${playLabel}, track ${String(index + 1).padStart(2, '0')}`;
 
   return (
     <div
@@ -83,7 +90,7 @@ export function TrackCard({ track, queue, index, countMode = 'index', shuffleSou
         type="button"
         onClick={(e) => { e.stopPropagation(); onClick(); }}
         disabled={isDead}
-        aria-label={playLabel}
+        aria-label={buttonLabel}
         className={`hidden md:block text-xs tabular-nums text-left ${
           isCurrent
             ? 'text-accent-bright animate-pulse-soft'
