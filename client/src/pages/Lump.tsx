@@ -206,12 +206,28 @@ export function Lump() {
   };
 
   const onRemove = async (trackId: number) => {
-    const before = tracks;
-    setData({ ...data, tracks: tracks.filter((t) => t.id !== trackId), lump: { ...lump, track_count: lump.track_count - 1 } });
+    const idx = tracks.findIndex((t) => t.id === trackId);
+    if (idx < 0) return;
+    const removed = tracks[idx];
+    // Functional updates: with several removals in flight, each one changes
+    // (and on failure restores) only its own track, and the count with it.
+    setData((d) => d && {
+      ...d,
+      tracks: d.tracks.filter((t) => t.id !== trackId),
+      lump: { ...d.lump, track_count: d.lump.track_count - 1 },
+    });
     try {
       await api(`/api/lumps/${id}/tracks/${trackId}`, { method: 'DELETE' });
     } catch {
-      setData({ ...data, tracks: before });
+      setData((d) => {
+        if (!d || d.tracks.some((t) => t.id === trackId)) return d;
+        const at = Math.min(idx, d.tracks.length);
+        return {
+          ...d,
+          tracks: [...d.tracks.slice(0, at), removed, ...d.tracks.slice(at)],
+          lump: { ...d.lump, track_count: d.lump.track_count + 1 },
+        };
+      });
     }
   };
 
