@@ -53,7 +53,7 @@ flowchart LR
 
 **Accounts and abuse controls.** Passwords are bcrypt-hashed. JWTs carry a `token_version`; bumping it on a password change or admin reset revokes every outstanding token at once. Signup is behind Cloudflare Turnstile. Rate limits are per IP or per user depending on the route (login, failed logins per IP and username, signup, password changes, lump writes, votes, search), and in production the server logs a warning if its first 50 API requests arrive without a forwarded client IP, since the IP-keyed limits would otherwise collapse into one global bucket.
 
-**Tests that cannot touch the wrong database.** The suite starts its own user-level MySQL on `127.0.0.1:33306` with data in `/tmp`, builds the schema, seeds a deterministic synthetic catalog, and connects as the same least-privilege user production uses. A guard refuses to run against anything other than that local `*_test` database. 108 tests across 23 files cover auth, rate limits, grants, migrations (including a dump-before-drop migration runner), the stream proxy, dedupe, link checks, public-domain rules, query shapes and repository hygiene (no secrets or non-placeholder values in tracked files). A separate harness (`npm run perf`) builds a 650,000-track synthetic database and times every endpoint end to end while running `EXPLAIN` on each SQL statement to flag full scans and filesorts.
+**Tests that cannot touch the wrong database.** The suite starts its own user-level MySQL on `127.0.0.1:33306` with data in `/tmp`, builds the schema, seeds a deterministic synthetic catalog, and connects as the same least-privilege user production uses. A guard refuses to run against anything other than that local `*_test` database. 110 tests across 24 files cover auth, rate limits, grants, migrations (including a dump-before-drop migration runner), the stream proxy, dedupe, link checks, public-domain rules, query shapes, lump reordering and repository hygiene (no secrets or non-placeholder values in tracked files). A separate harness (`npm run perf`) builds a 650,000-track synthetic database and times every endpoint end to end while running `EXPLAIN` on each SQL statement to flag full scans and filesorts.
 
 **Offline curation tooling.** `tools/scout/` is a ReAct-style agent loop over a local Ollama model (default `llama3.1:8b-instruct`) with web search, fetch and API-verification actions. It looks for new archives of openly licensed music and logs candidates to SQLite for the maintainer to review by hand, with a blocklist of sources already integrated or rejected. It is not part of the product: it never runs on the server, never touches the catalog, and nothing a listener hears is chosen by a model.
 
@@ -98,7 +98,7 @@ To index real sources instead, create a MySQL database, apply `server/db/schema.
 ```bash
 cd server
 npm run testdb:start
-npm test                          # 108 tests
+npm test                          # 110 tests
 npm run lint
 cd ../client && npx tsc -b && npx eslint .
 ```

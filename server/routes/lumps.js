@@ -323,7 +323,10 @@ router.patch('/:id/tracks/reorder', requireAuth, limiters().lumpWrites, async (r
       [lumpId]
     );
     const existingSet = new Set(existing.map((r) => r.track_id));
-    if (existingSet.size !== trackIds.length || trackIds.some((t) => !existingSet.has(t))) {
+    // Each of the lump's tracks exactly once: a repeated id would otherwise
+    // pass the size check and leave two tracks on one position.
+    if (existingSet.size !== trackIds.length || new Set(trackIds).size !== trackIds.length ||
+        trackIds.some((t) => !existingSet.has(t))) {
       await conn.rollback();
       return res.status(400).json({ error: 'track_ids must match the lump exactly' });
     }
