@@ -25,8 +25,19 @@ fi
   --innodb-buffer-pool-size=${TESTDB_BUFFER_POOL:-1G} --innodb-buffer-pool-chunk-size=${TESTDB_BUFFER_CHUNK:-128M} --max-connections=200 \
   --sql-mode=ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION \
   > "$DIR/start.log" 2>&1
+ready=0
 for _ in $(seq 60); do
-  [ -S "$DIR/mysqld.sock" ] && mysqladmin --no-defaults --socket="$DIR/mysqld.sock" -uroot ping >/dev/null 2>&1 && break
+  if [ -S "$DIR/mysqld.sock" ] && mysqladmin --no-defaults --socket="$DIR/mysqld.sock" -uroot ping >/dev/null 2>&1; then
+    ready=1
+    break
+  fi
   sleep 0.5
 done
+if [ "$ready" -ne 1 ]; then
+  # Fail loudly instead of reporting success: the tests would only fail later
+  # with connection errors that hide the cause.
+  echo "test mysqld did not answer within 30 s (logs: $DIR/error.log, $DIR/start.log)" >&2
+  tail -n 20 "$DIR/error.log" >&2 2>/dev/null || true
+  exit 1
+fi
 echo "test mysqld running (pid $(cat "$DIR/mysqld.pid")) on 127.0.0.1:$PORT"
