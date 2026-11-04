@@ -64,11 +64,13 @@ export function Artist() {
     : undefined;
 
   const onPlayAll = () => {
-    if (!tracks.length) return;
-    // Plays the loaded queue in linear order. If the user toggles shuffle
-    // after this, the filter-source pool kicks in and draws from the full
-    // catalog via the refill effect.
-    player.load(tracks[0], tracks, shuffleSource);
+    // Plays the loaded queue in linear order, from the first playable track
+    // (load() ignores a dead one). If the user toggles shuffle after this,
+    // the filter-source pool kicks in and draws from the full catalog via
+    // the refill effect.
+    const first = tracks.find((t) => t.playable);
+    if (!first) return;
+    player.load(first, tracks, shuffleSource);
   };
 
   return (

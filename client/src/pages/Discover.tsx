@@ -185,7 +185,8 @@ export function Discover() {
       // The pre-fetched batch is already server-randomized, so playing them
       // linearly while we wait for refill is effectively shuffled.
       player.setPlayMode('shuffle');
-      player.load(batch[0], batch, { kind: 'location', lat, lng, radius: r });
+      // From the first playable track: load() ignores a dead one.
+      player.load(batch.find((t) => t.playable) ?? batch[0], batch, { kind: 'location', lat, lng, radius: r });
       announce(`shuffling ${data.total_tracks} tracks in ${data.resolved.display_name}`);
     } catch {
       // Surface inline next to the button. Keeps errors local.
