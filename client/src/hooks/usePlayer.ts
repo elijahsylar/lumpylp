@@ -52,6 +52,7 @@ export function usePlayer() {
 const PLAYED_CAP = 200;
 const REFILL_THRESHOLD = 10;
 const REFILL_BATCH = 50;
+const REFILL_RETRY_MS = 5000; // wait before retrying a failed shuffle refill
 const EXCLUDE_CAP = 200;
 
 // Shuffle every track in `arr` except the one matching `keepId`, which stays
@@ -95,6 +96,10 @@ export function usePlayerEngine(): PlayerState {
   const playModeRef = useRef<PlayMode>('order');
   const shuffleSourceRef = useRef<ShuffleSource>({ kind: 'array' });
   const refillingRef = useRef(false);
+  // Bumped when a refill ends without adding anything (dropped as stale, or
+  // failed), so the effect runs again: no other state change would trigger it
+  // once upcoming is empty.
+  const [refillTick, setRefillTick] = useState(0);
   useEffect(() => { playModeRef.current = playMode; }, [playMode]);
   useEffect(() => { shuffleSourceRef.current = shuffleSource; }, [shuffleSource]);
 
@@ -284,11 +289,14 @@ export function usePlayerEngine(): PlayerState {
     ].slice(0, EXCLUDE_CAP);
     if (excludeIds.length) params.set('exclude', excludeIds.join(','));
 
+    let stale = false;
+    let failed = false;
     fetch(`/api/tracks/shuffle?${params.toString()}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`shuffle ${r.status}`))))
       .then((data) => {
         // Stale-source check: bail if mode flipped, kind changed, or the
         // identifying fields shifted while this fetch was in flight.
+        stale = true;
         if (playModeRef.current !== 'shuffle') return;
         const cur = shuffleSourceRef.current;
         if (cur.kind !== sourceAtFetchStart.kind) return;
@@ -300,6 +308,7 @@ export function usePlayerEngine(): PlayerState {
           if (cur.lng !== sourceAtFetchStart.lng) return;
           if (cur.radius !== sourceAtFetchStart.radius) return;
         }
+        stale = false;
         const fetched: Track[] = data.tracks || [];
         setUpcoming((u) => {
           const blocked = new Set([
@@ -310,9 +319,15 @@ export function usePlayerEngine(): PlayerState {
           return [...u, ...fetched.filter((t) => !blocked.has(t.id))];
         });
       })
-      .catch(() => { /* silent — next state change retries */ })
-      .finally(() => { refillingRef.current = false; });
-  }, [playMode, shuffleSource, upcoming.length, current, played]);
+      .catch(() => { failed = true; })
+      .finally(() => {
+        refillingRef.current = false;
+        // Run the effect again: at once for a stale result (the new source
+        // still needs its own fetch), after a pause for a failure.
+        if (stale) setRefillTick((t) => t + 1);
+        else if (failed) setTimeout(() => setRefillTick((t) => t + 1), REFILL_RETRY_MS);
+      });
+  }, [playMode, shuffleSource, upcoming.length, current, played, refillTick]);
 
   const queue = useMemo(
     () => (current ? [...played, current, ...upcoming] : []),
