@@ -192,15 +192,17 @@ export function Lump() {
     player.load(track, tracks);
   };
 
+  // Start at the first playable track: load() ignores a dead one, so a dead
+  // first track used to make these buttons do nothing.
   const onPlayAll = () => {
-    if (!tracks.length) return;
-    player.load(tracks[0], tracks);
+    const first = tracks.find((t) => t.playable);
+    if (first) player.load(first, tracks);
   };
 
   const onShuffle = () => {
-    if (!tracks.length) return;
     const shuffled = shuffleArr(tracks);
-    player.load(shuffled[0], shuffled);
+    const first = shuffled.find((t) => t.playable);
+    if (first) player.load(first, shuffled);
   };
 
   const onRemove = async (trackId: number) => {

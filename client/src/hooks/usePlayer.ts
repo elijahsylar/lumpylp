@@ -184,26 +184,30 @@ export function usePlayerEngine(): PlayerState {
   }, [current]);
 
   const next = useCallback(() => {
-    if (!current || !upcoming.length) return;
-    const nextTrack = upcoming[0];
-    // Validate before any state mutation — matches load()'s early-return
-    // contract so an unplayable track can't corrupt played/upcoming.
-    if (!audioRef.current || !nextTrack.playable) return;
+    if (!current || !upcoming.length || !audioRef.current) return;
+    // Skip tracks that can't play (dead links in a lump or list): stopping
+    // at one would end playback for good, since nothing else advances.
+    // Validated before any state mutation, so played/upcoming stay intact
+    // when nothing ahead is playable.
+    const i = upcoming.findIndex((t) => t.playable);
+    if (i < 0) return;
     setPlayed((p) => {
       const appended = [...p, current];
       return appended.length > PLAYED_CAP ? appended.slice(-PLAYED_CAP) : appended;
     });
-    setUpcoming((u) => u.slice(1));
-    playTrack(nextTrack);
+    setUpcoming((u) => u.slice(i + 1));
+    playTrack(upcoming[i]);
   }, [current, upcoming, playTrack]);
 
   const prev = useCallback(() => {
-    if (!current || !played.length) return;
-    const prevTrack = played[played.length - 1];
-    if (!audioRef.current || !prevTrack.playable) return;
-    setPlayed((p) => p.slice(0, -1));
+    if (!current || !played.length || !audioRef.current) return;
+    // The most recent playable track; dead ones in between are dropped.
+    let j = played.length - 1;
+    while (j >= 0 && !played[j].playable) j -= 1;
+    if (j < 0) return;
+    setPlayed((p) => p.slice(0, j));
     setUpcoming((u) => [current, ...u]);
-    playTrack(prevTrack);
+    playTrack(played[j]);
   }, [current, played, playTrack]);
 
   const nextRef = useRef(next);
