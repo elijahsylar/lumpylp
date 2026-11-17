@@ -48,10 +48,8 @@ test('lumpylp_app: every write statement the API sends is allowed by the grants'
        ON DUPLICATE KEY UPDATE direction = 1, weight = 1.00`,
     `UPDATE votes SET direction = 1, weight = 1.00 WHERE id = 0`,
     `DELETE FROM votes WHERE id = 0`,
-    `UPDATE tracks SET
-       upvotes   = (SELECT COUNT(*) FROM votes WHERE track_id = 0 AND direction = 1),
-       downvotes = (SELECT COUNT(*) FROM votes WHERE track_id = 0 AND direction = -1)
-     WHERE id = 0`,
+    `SELECT id FROM tracks WHERE id = 0 FOR UPDATE`,
+    `UPDATE tracks SET upvotes = 0, downvotes = 0 WHERE id = 0`,
     // routes/lumps.js
     `INSERT INTO user_lumps (user_id, name, description, is_public) SELECT 0, 'x', NULL, 0 FROM DUAL WHERE FALSE`,
     `UPDATE user_lumps SET name = 'x', description = 'x', is_public = 1 WHERE id = 0`,
@@ -73,7 +71,10 @@ test('lumpylp_app: every write statement the API sends is allowed by the grants'
   ]) {
     await assert.doesNotReject(c.query(sql), sql);
   }
-  // The statement the vote recount used to send is not: indexed_at is outside the column grant.
+  // A locking read needs an UPDATE (or DELETE) privilege on the table: allowed
+  // on tracks through the counter columns, refused where the API only reads.
+  await denied(c, 'SELECT id FROM genres LIMIT 1 FOR UPDATE');
+  // The statement the vote recount used to send is not allowed either: indexed_at is outside the column grant.
   await denied(c, 'UPDATE tracks SET upvotes = upvotes, downvotes = downvotes, indexed_at = indexed_at WHERE id = 0');
 });
 
