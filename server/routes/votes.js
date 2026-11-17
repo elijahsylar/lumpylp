@@ -94,10 +94,16 @@ router.post('/:id/vote', requireAuth, limiters().votes, async (req, res, next) =
       );
     } else {
       // No prior vote — insert. Stamp weight at write time.
+      // One atomic statement on uniq_user_track: when a concurrent request
+      // (a double click, a retry) inserted this user's vote after the read
+      // above, this sets that row to the requested direction instead of
+      // failing with a duplicate-key error (which used to surface as a 500).
+      // Either way the user ends up with exactly one vote, in `direction`.
       const weight = await getUserWeight(userId);
       await query(
-        `INSERT INTO votes (user_id, track_id, direction, weight) VALUES (?, ?, ?, ?)`,
-        [userId, trackId, direction, weight]
+        `INSERT INTO votes (user_id, track_id, direction, weight) VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE direction = ?, weight = ?`,
+        [userId, trackId, direction, weight, direction, weight]
       );
     }
 
