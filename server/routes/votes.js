@@ -31,16 +31,17 @@ async function getUserWeight(userId) {
 }
 
 async function recountAndFetch(trackId) {
-  // `indexed_at = indexed_at` is an explicit no-op to suppress the column's
-  // ON UPDATE CURRENT_TIMESTAMP trigger — without it, every vote silently
-  // bumps the track's indexed_at and floats it to the top of any list
-  // sorted by recency. Migration 004 drops the trigger entirely; this clause
-  // remains as defense-in-depth for older deploys.
+  // Only upvotes and downvotes are written: the API's database user holds
+  // UPDATE on exactly those counter columns of tracks (db/grants.sql). An
+  // earlier `indexed_at = indexed_at` no-op here, meant to stop the column's
+  // old ON UPDATE CURRENT_TIMESTAMP from re-stamping a voted track, needed
+  // UPDATE on indexed_at too and so failed every vote under those grants.
+  // Migration 004 removed the ON UPDATE and db/schema.sql has none, so a
+  // vote leaves indexed_at alone (test/votes.test.js checks both).
   await query(
     `UPDATE tracks SET
        upvotes   = (SELECT COUNT(*) FROM votes WHERE track_id = ? AND direction = 1),
-       downvotes = (SELECT COUNT(*) FROM votes WHERE track_id = ? AND direction = -1),
-       indexed_at = indexed_at
+       downvotes = (SELECT COUNT(*) FROM votes WHERE track_id = ? AND direction = -1)
      WHERE id = ?`,
     [trackId, trackId, trackId]
   );
