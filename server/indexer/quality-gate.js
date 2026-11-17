@@ -73,6 +73,32 @@ function canonicalizeKey(key) {
   return `cc-by-${mods.join('-')}`;
 }
 
+// Every spelling that means "public domain", matched against the WHOLE
+// value (lower-cased, HTML stripped, trimmed). Never a substring
+// or word match: "not public domain", "public domain in some countries only"
+// and "no known public domain status" must not normalize to public-domain.
+// To accept a new upstream spelling, add an anchored (^...$) pattern here and
+// a case to test/audit-license-gate.test.js. The Creative Commons URL forms
+// (publicdomain/zero, publicdomain/mark, licenses/publicdomain) are handled
+// by the URL branch of computeLicense, not here.
+const PUBLIC_DOMAIN_SPELLINGS = [
+  /^pd$/,                                              // spec slug, Wikimedia "PD"
+  /^public[-\s]?domain$/,                              // "Public domain", "public-domain", "PUBLIC DOMAIN"
+  /^public[-\s]?domain[-\s]?mark(?:[-\s]?1\.0)?$/,     // "Public Domain Mark", "Public Domain Mark 1.0"
+  /^public[-\s]?domain[-\s]?dedication$/,              // Creative Commons "Public Domain Dedication"
+  /^pdm(?:[-\s]?(?:owner|1\.0))?$/,                    // Wikimedia "PDM-owner", "PDM", "PDM 1.0"
+  // "cc-publicdomain" / "cc-pd": Musopen's "CC-PD", and upstream code paths
+  // that template "cc-{slug}" without checking for PD-marker slugs.
+  /^cc-(?:pd|publicdomain)$/,
+];
+
+// A Creative Commons license or public-domain URL, as the WHOLE value:
+// optional http(s) scheme (or scheme-relative), optional www, then
+// /licenses/<slug> or /publicdomain/<slug>, then only further path segments
+// (version, jurisdiction, deed or legalcode: /3.0/, /2.0/de/, /deed.en,
+// /legalcode) and an optional query or fragment. No surrounding words.
+const CC_LICENSE_URL = /^(?:https?:)?(?:\/\/)?(?:www\.)?creativecommons\.org\/(?:licenses|publicdomain)\/([a-z0-9-]+)(?:\/[a-z0-9._-]*)*(?:[?#][a-z0-9._=&%-]*)?$/;
+
 // Map raw license strings to a canonical key. Returns null if unrecognized.
 //
 // Handles (with examples seen in the wild):
@@ -106,12 +132,8 @@ function computeLicense(raw) {
   const stripVersion = (t) => t.replace(/[\s-]*\d+(?:\.\d+)?$/, '').trim();
 
   // ── public domain variants ─────────────────────────────────────
-  if (/\bpdm[\s-]?(owner|1\.0)?\b/.test(s)) return 'public-domain';
-  if (/\bpublic[\s-]?domain[\s-]?mark\b/.test(s)) return 'public-domain';
-  if (/^p(d|ublic[-\s]?domain)$/.test(s) || s.includes('public domain')) return 'public-domain';
-  // Bare "cc-publicdomain" / "cc-pd" — produced by some upstream code paths
-  // that template "cc-{slug}" without checking for PD-marker slugs.
-  if (s === 'cc-publicdomain' || s === 'cc-pd') return 'public-domain';
+  // Whole-string matches only (see PUBLIC_DOMAIN_SPELLINGS).
+  if (PUBLIC_DOMAIN_SPELLINGS.some((re) => re.test(s))) return 'public-domain';
 
   // ── Free Art License ──────────────────────────────────────────
   if (/artlibre\.org\/licence\/lal/.test(s)) return 'free-art';
@@ -135,7 +157,9 @@ function computeLicense(raw) {
   // ── CC URL form ──────────────────────────────────────────────
   // Capture the slug after /licenses/ or /publicdomain/. Treat PD markers
   // explicitly so the URL form doesn't emit "cc-publicdomain" nonsense.
-  const urlMatch = s.match(/creativecommons\.org\/(?:licenses|publicdomain)\/([a-z0-9-]+)/);
+  // The WHOLE value must be the URL (see CC_LICENSE_URL): a sentence that
+  // merely contains one ("not https://creativecommons.org/...") is not a license.
+  const urlMatch = s.match(CC_LICENSE_URL);
   if (urlMatch) {
     const slug = urlMatch[1];
     if (slug === 'zero' || slug === 'mark' || slug === 'publicdomain' || slug === 'pd') {
