@@ -4,6 +4,7 @@ import { query } from '../db.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { TRACK_COLUMNS_SQL, serializeTrack, serializeTracks } from '../lib/trackShape.js';
 import { parsePage, PAGE_TOO_DEEP, cappedCount } from '../lib/paging.js';
+import { streamRedirectTarget } from '../lib/streamHosts.js';
 
 const router = Router();
 
@@ -411,7 +412,14 @@ streamRouter.get('/:trackId', async (req, res, next) => {
     if (source !== 'ccmixter') {
       // Jamendo / Wikimedia: 302 redirect; we can't observe success from
       // here (browser fetches the CDN directly); the sweep checks these.
-      return res.redirect(302, stream_url);
+      // Only to an http(s) URL on a host allowed for this source
+      // (lib/streamHosts.js), so a bad stored value never becomes a redirect.
+      const location = streamRedirectTarget(source, stream_url);
+      if (!location) {
+        console.warn('[stream] refused redirect: stream_url not allowed for source', trackId, source);
+        return res.status(404).json({ error: 'no stream' });
+      }
+      return res.redirect(302, location);
     }
 
     const target = ccmixterProxyTarget(stream_url);
