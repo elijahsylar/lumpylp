@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/elijahsylar/lumpylp/actions/workflows/ci.yml)
 
-A streaming library of legally free music: Creative Commons and public-domain recordings gathered from open archives, with curation left entirely to listeners. Nothing in the product ranks or recommends tracks; what rises is what people vote up ("lump"). The hard part is not the player, it is the catalog: eighteen sources describe licenses, rights, artists and locations in eighteen different ways, and a track should only be playable when its rights are actually clear.
+LumpyLP is a community-ranked catalog of music that is free to stream: Creative Commons and public-domain recordings, recordings streamed under platform terms (Audius), and live recordings shared under band taping policies. Nothing in the product ranks or recommends tracks; what rises is what people vote up ("lump"). The hard part is not the player, it is the catalog. At the August 2026 snapshot the catalog held 645,161 tracks. There are resolvers for 18 sources, 15 of which held tracks at that snapshot, and each source describes licenses, rights, artists and locations in its own way. A track should only be playable when its rights are actually clear.
 
 ![Home](docs/screenshots/home.png)
 
@@ -41,9 +41,9 @@ flowchart LR
 
 ## Technically notable parts
 
-**Source resolvers.** Eighteen catalog sources (`server/lib/sources.js`), including five Internet Archive collection resolvers, Audius, Jamendo, ccMixter, Wikimedia Commons, the Library of Congress National Jukebox, UCSB cylinder recordings, Musopen, Free Music Archive, Europeana and Smithsonian. Each one handles its own paging, politeness delays and User-Agent rules. Streams are resolved per source at play time: most redirect to the origin, Audius resolves a healthy CDN node with failover, and ccMixter is proxied server-side because it checks the Referer. The proxy only ever fetches `https://ccmixter.org`, with TLS verification on and timeouts set.
+**Source resolvers.** Resolvers for 18 sources (`server/lib/sources.js`): five Internet Archive collections, Audius, Jamendo, ccMixter, Wikimedia Commons, the Library of Congress National Jukebox, UCSB cylinder recordings, Musopen, Incompetech, Audionautix, phlow, Europeana, Smithsonian and SoundCloud. Fifteen held tracks at the August 2026 snapshot; Europeana, Smithsonian and SoundCloud held none. Each one handles its own paging, politeness delays and User-Agent rules. Streams are resolved per source at play time: most redirect to the origin, Audius resolves a healthy CDN node with failover, and ccMixter is proxied server-side because it checks the Referer. The proxy only ever fetches `https://ccmixter.org`, with TLS verification on and timeouts set.
 
-**License gate.** `quality-gate.js` admits only an explicit set of licenses (the CC families, CC0, public domain, Free Art, Sampling Plus, and platform terms that grant streaming). Raw license strings from every source are mapped onto canonical slugs (`server/lib/licenses.js`), and a test checks that every raw value observed in production has a mapping, so a new spelling cannot slip through as "unknown". Each track carries attribution and a link to the item's own page, which holds the exact license.
+**License gate.** `quality-gate.js` admits only an explicit set of licenses: the Creative Commons BY families, CC0, public domain, Free Art, Sampling Plus, Audius platform terms and band taping policies. Not every row in the catalog passed through it. Rows ingested before the gate existed keep their raw values (bare Jamendo forms such as `by-nc-nd`, and ccMixter's long names), some early Jamendo rows are recorded only as `CC`, and Audius rows from an earlier ingest path are recorded as `all-rights-reserved` and streamed under Audius terms. Raw license strings from every source are mapped onto canonical slugs (`server/lib/licenses.js`), and a test checks that every raw value observed in production has a mapping, so a new spelling cannot slip through as "unknown". Each track carries attribution and a link to the item's own page, which holds the exact license.
 
 **Public-domain dates.** US sound recordings enter the public domain on fixed dates under 17 USC 1401. Recordings that are not yet public domain are hidden with a dated reason, and `server/scripts/unhide-pd-effective.js` (meant for a yearly timer) unhides exactly the rows whose date has arrived, leaving every other hide alone. A separate migration hides items whose uploaders labelled them public domain but whose dates say otherwise.
 
@@ -108,6 +108,10 @@ cd ../client && npx tsc -b && npx eslint .
 ## Project status
 
 The public site is paused. The code here is the relaunch branch: Stripe and paid uploads removed, free accounts behind Turnstile, admin moderation, least-privilege database users and the test suite above. The client has no automated tests yet.
+
+## Project history
+
+The private original has commits from 30 April 2026 to 4 November 2026. This public repository is a scrubbed snapshot of that private original, published in November 2026, which is why its commit history is short. Developed with Claude Code under a gated workflow of written plan, implementation, separate review and my sign-off.
 
 ## License
 
